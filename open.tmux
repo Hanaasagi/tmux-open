@@ -11,6 +11,9 @@ default_open_editor_key="C-o"
 open_editor_option="@open-editor"
 open_editor_override="@open-editor-command"
 
+default_open_translator_key="C-t"
+open_translator_option="@open-open-translator"
+
 command_exists() {
 	local command="$1"
 	type "$command" >/dev/null 2>&1
@@ -83,6 +86,10 @@ generate_editor_command() {
 	echo "xargs -I {} tmux send-keys '$editor -- \"{}\"'; tmux send-keys 'C-m'"
 }
 
+generate_trans_command() {
+	echo "xargs -I {} tmux split-window -l 10 'trans -b -t zh  -- \"{}\" > /dev/null | less -R '"
+}
+
 set_copy_mode_open_bindings() {
 	local open_command="$(generate_open_command)"
 	local key_bindings=$(get_tmux_option "$open_option" "$default_open_key")
@@ -133,10 +140,26 @@ set_copy_mode_open_search_bindings() {
 	done
 }
 
+set_copy_mode_open_translator_bindings() {
+	local trans_command="$(generate_trans_command)"
+	local key_bindings=$(get_tmux_option "$open_translator_option" "$default_open_translator_key")
+	local key
+	for key in $key_bindings; do
+		if tmux-is-at-least 2.4; then
+			tmux bind-key -T copy-mode-vi "$key" send-keys -X copy-pipe-and-cancel "$trans_command"
+			tmux bind-key -T copy-mode    "$key" send-keys -X copy-pipe-and-cancel "$trans_command"
+		else
+			tmux bind-key -t vi-copy    "$key" copy-pipe "$trans_command"
+			tmux bind-key -t emacs-copy "$key" copy-pipe "$trans_command"
+		fi
+	done
+}
+
 main() {
 	set_copy_mode_open_bindings
 	set_copy_mode_open_editor_bindings
 	set_copy_mode_open_search_bindings
+	set_copy_mode_open_translator_bindings
 }
 
 main

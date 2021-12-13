@@ -87,7 +87,7 @@ generate_editor_command() {
 }
 
 generate_trans_command() {
-	echo "xargs -I {} tmux split-window -l 10 'trans -b -t zh  -- \"{}\" > /dev/null | less -R '"
+    echo -E "xargs | sed ':label;N;s/\n/ /g;b label' | xargs -I {} tmux split-window -l 10 'trans -b -t zh  -- \"{}\" > /dev/null | less -R'"
 }
 
 set_copy_mode_open_bindings() {
